@@ -4,6 +4,9 @@
 #ifndef __GAME__
 #define __GAME__
 
+// Initialize game
+void game_init();
+
 // Change to the game scene
 void game_run();
 

@@ -1,12 +1,5 @@
-#ifdef __PALETTE__
-#error "You can only include this once!"
-#else
-#define __PALETTE__
-#endif
-
-
 // Palette
-static char palette[] = {
+static const char palette[] = {
 0,0,0,
 0,0,85,
 0,0,170,
@@ -261,6 +254,6 @@ static char palette[] = {
 255,218,255,
 255,255,0,
 255,255,85,
-255,255,170,
+255,255,255,
 255,255,255,
 };

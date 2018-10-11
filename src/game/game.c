@@ -3,33 +3,31 @@
 
 #include "game.h"
 
+#include <stdio.h>
+
 #include "../core/graph.h"
 #include "../core/input.h"
+#include "../core/bitmap.h"
+
+// Bitmaps
+static BITMAP* bmp_parrot = NULL;
+static BITMAP* bmp_font = NULL;
+
+
+
+// Initialize game
+void game_init() {
+
+    bmp_parrot = load_bitmap("ASSETS/BITMAPS/PARROT.BIN");
+    bmp_font = load_bitmap("ASSETS/BITMAPS/FONT.BIN");
+}
 
 
 // Change to the game scene
 void game_run() {
 
-    short t1 = input_get_button(BUTTON_FIRE1);
-    short t2 = input_get_button(ARROW_LEFT);
-
-    // Change color when certain buttons are pressed/released
-
-    if(t1 == PRESSED) {
-
-        clear_screen(128);
-    }
-    else if(t1 == RELEASED) {
-
-        clear_screen(170);
-    }
-    
-    if(t2 == RELEASED) {
-
-        clear_screen(165);
-    }
-    else if(t2 == PRESSED) {
-
-        clear_screen(170);
-    }
+    // clear_screen(3);
+    draw_bitmap_fast(bmp_parrot, 32, 32);
+   
+    draw_text(bmp_font, "Hello world!", 2, 2);
 }

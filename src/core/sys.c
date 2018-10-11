@@ -37,7 +37,7 @@ void sys_init() {
     init_input();
 
     // Clear screen
-    clear_screen(170);
+    clear_screen(0);
 }
 
 

@@ -11,7 +11,7 @@
 #include "string.h"
 #include "stdio.h"
 
-#include "palette.h"
+#include "palette.c"
 
 
 // VGA position
@@ -32,7 +32,7 @@ static void set_palette() {
 
     for(i = 0; i < 255*3 ; ++ i) {
 
-        outp(PALETTE_DATA, palette[i]);
+        outp(PALETTE_DATA, palette[i]/4);
     }
 }
 
@@ -48,11 +48,76 @@ void init_graphics() {
 }
 
 
-
 // Clear screen
 void clear_screen(char col) {
 
     char* VGA = (char*)VGA_POS;   
 
     memset(VGA, col, 320*200);
+}
+
+
+// Draw a bitmap fast
+void draw_bitmap_fast(BITMAP* bmp, short dx, short dy) {
+
+    char* VGA = (char*)VGA_POS; 
+    char* data = (char*)bmp->data;
+    short y = 0;
+    short offset = 320*dy + dx;
+    short bmp_off = 0;
+
+    for(; y < bmp->h; ++ y) {
+
+        memcpy(VGA + offset, data + bmp_off, bmp->w);
+        offset += 320;
+        bmp_off += bmp->w;
+    }
+}
+
+
+// Draw a bitmap region fast
+void draw_bitmap_region_fast(BITMAP* bmp, short sx, short sy, short sw, short sh,
+     short dx, short dy) {
+
+    char* VGA = (char*)VGA_POS; 
+    char* data = (char*)bmp->data;
+    short y;
+    short offset = 320*dy + dx;
+    short bmp_off = bmp->w*sy + sx;
+
+    for(y=0; y < sh; ++ y) {
+
+        memcpy(VGA + offset, data + bmp_off, sw);
+        offset += 320;
+        bmp_off += bmp->w;
+    }
+}
+
+
+// Draw text 
+void draw_text(BITMAP* bmp, const char* text, 
+    short dx, short dy) {
+    
+    char len = strlen((const char*)text);
+
+    short x = dx;
+    short y = dy;
+    short cw = bmp->w / 16;
+    short ch = cw;
+    short i=0;
+    char c;
+    short sx;
+    short sy;
+
+    for(; i < len; ++ i) {
+
+        c = text[i];
+        if(c > 0) -- c;
+        sx = c % 16;
+        sy = c / 16;
+
+        draw_bitmap_region_fast(bmp,sx*cw,sy*ch,cw,ch,x,y);
+
+        x += cw;
+    }
 }
