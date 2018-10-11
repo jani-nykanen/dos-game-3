@@ -59,9 +59,7 @@ int conv_bitmap(const char* in, const char* out) {
         eb = (b / 85);
 
         pixel = er | eg | eb;
-        // Special check
-        if(pixel == 255) pixel = 254;
-        
+
         data[i] = pixel;
     }
 

@@ -30,7 +30,7 @@ static void set_palette() {
     // Set palette
     outp(PALETTE_INDEX,0);
 
-    for(i = 0; i < 255*3 ; ++ i) {
+    for(i = 0; i < 256*3 ;  ++ i) {
 
         outp(PALETTE_DATA, palette[i]/4);
     }
