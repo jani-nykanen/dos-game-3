@@ -8,6 +8,7 @@
 #include "../core/graph.h"
 #include "../core/input.h"
 #include "../core/bitmap.h"
+#include "../core/sprite.h"
 
 // Frame skip
 static const FRAME_SKIP = 2;
@@ -17,6 +18,9 @@ static BITMAP* bmp_parrot = NULL;
 static BITMAP* bmp_font = NULL;
 static BITMAP* bmp_goat = NULL;
 
+// Goat sprite
+static SPRITE spr_goat;
+
 // Game canvas
 static BITMAP* canvas;
 
@@ -24,27 +28,34 @@ static BITMAP* canvas;
 static char frame_skip_timer = 0;
 
 // TEMP
-static int pos = 0;
+static int pos = 96;
 
 
 // Draw canvas
 static void draw_canvas() {
 
+    // Draw random stuff
     clear_screen(170);
     draw_bitmap_fast(bmp_parrot, -16, 48);
     draw_text(bmp_font, "Hello world!", 0, 0);
     fill_rect(144,32,64,32, 65);
 
-    draw_bitmap_region(bmp_goat, 
-        0, 0, 128, 32, 96 + pos, 32, FLIP_BOTH);
+    // Draw goat
+    spr_draw(&spr_goat, bmp_goat, pos-16, 32, 0);
+    spr_draw(&spr_goat, bmp_goat, pos-16 + 192, 32, 0);
 }
 
 
 // Update game
 static void update_game() {
 
+    // Update temp position
     pos -= 2;
-    pos %= 192;
+    if(pos < -16)
+        pos += 192;
+
+    // Animate goat
+    spr_animate(&spr_goat, 0, 0, 5, 2);
 }
 
 
@@ -69,6 +80,9 @@ void game_init() {
     bmp_parrot = load_bitmap("ASSETS/BITMAPS/PARROT.BIN");
     bmp_font = load_bitmap("ASSETS/BITMAPS/FONT.BIN");
     bmp_goat = load_bitmap("ASSETS/BITMAPS/GOAT.BIN");
+
+    // Create sprites
+    spr_goat = create_sprite(32, 32);
 
     // Create canvas
     canvas = create_bitmap(192, 160, NULL);
