@@ -7,12 +7,15 @@
 #include "stdlib.h"
 #include "math.h"
 #include "stdio.h"
+#include "stdbool.h"
 
 
 // Load a bitmap & convert it to a binary format
-int conv_bitmap(const char* in, const char* out) {
+int conv_bitmap(const char* in, const char* out, bool dither) {
 
     const Uint8 ALPHA = 170;
+    const float DIVISOR = 36.428f;
+    const int DIVISOR2 = 85;
 
     // Load surface
     SDL_Surface* surf = IMG_Load(in);
@@ -33,11 +36,16 @@ int conv_bitmap(const char* in, const char* out) {
 
     // Go through the data
     int i = 0;
+    int row = 0;
+    int column = 0;
     Uint8 pixel;
     Uint8 r,g,b,a;
     Uint8 er,eg,eb;
     Uint8* pdata = (Uint8*)surf->pixels;
     for(; i < pixelCount; i++) {
+
+        row = i / surf->w;
+        column = i % surf->w;
 
         a = pdata[i*4 +3];
         if(a < 255) {
@@ -50,13 +58,50 @@ int conv_bitmap(const char* in, const char* out) {
         g = pdata[i*4 +1];
         r = pdata[i*4 ];
 
-        er = (Uint8) round(r / 36.428f);
-        if(er > 7) r = 7;
-        er = er << 5;
-        eg = (Uint8) round(g / 36.428f);
-        if(eg > 7) eg = 7;
-        eg = eg << 2;
-        eb = (b / 85);
+        // No dithering
+        if(!dither) {
+
+            er = (Uint8) round((float)r / DIVISOR);
+            if(er > 7) r = 7;
+            er = er << 5;
+            eg = (Uint8) round((float)g / DIVISOR);
+            if(eg > 7) eg = 7;
+            eg = eg << 2;
+            eb = (b / DIVISOR2);
+        }
+        // Dithering
+        else {
+
+            float (*func) (float);
+
+            // Even
+            if((row % 2 == 0 && column % 2 == 0) ||
+              ((row % 2 == 1 && column % 2 == 1))) {
+
+                func = floorf;
+            }
+            // Odd
+            else {
+
+                func = ceilf;
+            }
+
+            er = (Uint8) func(r / (DIVISOR/2.0f) );
+            eg = (Uint8) func(g / (DIVISOR/2.0f) );
+            eb = (Uint8) func(b / ((float)DIVISOR2 / 2.0f));
+
+            er = er / 2;
+            eg = eg / 2;
+            eb = eb / 2;
+
+            // Limit
+            if(er > 7) er = 7;
+            if(eg > 7) eg = 7;
+            if(eb > 3) eb = 3;
+
+            er = er << 5;
+            eg = eg << 2;
+        }
 
         pixel = er | eg | eb;
 
@@ -101,10 +146,19 @@ int main(int argc, char** argv) {
         printf("Too few arguments! Help: bmpconv in out\n");
         return 1;
     }
+    // Check if dither
+    bool dither = false;
+    if(argc > 3) {
+
+        if(strcmp(argv[3], "-dither") == 0) {
+
+            dither = true;
+        }
+    }
 
     // Init SDL2_img
     IMG_Init(IMG_INIT_PNG);
 
     // Convert
-    return conv_bitmap(argv[1], argv[2]);
+    return conv_bitmap(argv[1], argv[2], dither);
 }
