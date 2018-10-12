@@ -137,28 +137,7 @@ void clear_screen(char col) {
 // Draw a bitmap fast
 void draw_bitmap_fast(BITMAP* bmp, short dx, short dy) {
 
-    char* VGA = target_frame->data; 
-    char* data = (char*)bmp->data;
-    short y = 0;
-    short offset, bmp_off;
-
-    // Clip
-    short sx = 0;
-    short sy = 0;
-    short sw = bmp->w;
-    short sh = bmp->h;
-
-    // Clip
-    if(!clip(bmp, &dx, &dy, &sx, &sy, &sw, &sh, 0)) return;
-    offset = target_frame->w*dy + dx;;
-    bmp_off = bmp->w*sy + sx;
-
-    for(; y < sh; ++ y) {
-
-        memcpy(VGA + offset, data + bmp_off, sw);
-        offset += target_frame->w;
-        bmp_off += bmp->w;
-    }
+    draw_bitmap_region_fast(bmp, 0, 0, bmp->w, bmp->h, dx, dy);
 }
 
 

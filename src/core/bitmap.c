@@ -35,6 +35,10 @@ BITMAP* create_bitmap(short w, short h, char* data) {
         }
     }
 
+    // Store size
+    bmp->w = w;
+    bmp->h = h;
+
     return bmp;
 }
 
