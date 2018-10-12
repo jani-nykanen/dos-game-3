@@ -21,6 +21,11 @@ static const long VGA_POS = 0xA0000000;
 static const long PALETTE_INDEX = 0x03c8;
 static const long PALETTE_DATA = 0x03c9;
 
+// Target frame
+static BITMAP* target_frame;
+// Default frame
+static BITMAP default_frame;
+
 
 // Set palette
 static void set_palette() {
@@ -37,6 +42,72 @@ static void set_palette() {
 }
 
 
+// Clip
+static bool clip(BITMAP* bmp, 
+    short* dx, short* dy, 
+    short* sx, short *sy,
+    short* sw, short* sh, char flip) {
+
+	short w = target_frame->w;
+	short h = target_frame->h;
+
+	short ow, oh;
+	
+	if(*dx+*sw >= w) {
+
+		ow = *sw;
+		*sw = (w - *dx);
+
+		if((flip & FLIP_H) != 0) {
+
+			*sx += ow - *sw;
+		}
+
+	} else if(*dx < 0) {
+
+		ow = *sw;
+		*sx += -*dx;
+		*sw += *dx;
+		*dx = 0;
+
+		if((flip & FLIP_H) != 0) {
+
+			*sx += *sw - ow;
+		}
+	}
+	if(*dy+*sh >= h) {
+
+		oh = *sh;
+		*sh = h - *dy;
+
+		if((flip & FLIP_V) != 0) {
+
+			*sy += oh - *sh;
+		}
+
+	} else if(*dy < 0) {
+
+		oh = *sh;
+		*sy += -*dy;
+		*sh += *dy;
+		*dy = 0;
+
+		if((flip & FLIP_V) != 0) {
+
+			*sy += *sh - oh;
+		}
+	}
+
+	// Check if(we have anything to be drawn
+	if(*sw <= 0 || *sh <= 0 || *sx >= bmp->w || *sy >= bmp->h) {
+	
+		return false;
+	}
+
+	return true;
+}
+
+
 // Initialize
 void init_graphics() {
 
@@ -45,31 +116,47 @@ void init_graphics() {
 
     // Set palette
     set_palette();
+
+    // "Create" default frame
+    default_frame.w = 320;
+    default_frame.h = 200;
+    default_frame.data = (char*)VGA_POS;
+
+    target_frame = &default_frame;
 }
 
 
 // Clear screen
 void clear_screen(char col) {
 
-    char* VGA = (char*)VGA_POS;   
-
-    memset(VGA, col, 320*200);
+    memset(target_frame->data, col, 
+        target_frame->w*target_frame->h);
 }
 
 
 // Draw a bitmap fast
 void draw_bitmap_fast(BITMAP* bmp, short dx, short dy) {
 
-    char* VGA = (char*)VGA_POS; 
+    char* VGA = target_frame->data; 
     char* data = (char*)bmp->data;
     short y = 0;
-    short offset = 320*dy + dx;
-    short bmp_off = 0;
+    short offset, bmp_off;
 
-    for(; y < bmp->h; ++ y) {
+    // Clip
+    short sx = 0;
+    short sy = 0;
+    short sw = bmp->w;
+    short sh = bmp->h;
 
-        memcpy(VGA + offset, data + bmp_off, bmp->w);
-        offset += 320;
+    // Clip
+    if(!clip(bmp, &dx, &dy, &sx, &sy, &sw, &sh, 0)) return;
+    offset = target_frame->w*dy + dx;;
+    bmp_off = bmp->w*sy + sx;
+
+    for(; y < sh; ++ y) {
+
+        memcpy(VGA + offset, data + bmp_off, sw);
+        offset += target_frame->w;
         bmp_off += bmp->w;
     }
 }
@@ -79,16 +166,20 @@ void draw_bitmap_fast(BITMAP* bmp, short dx, short dy) {
 void draw_bitmap_region_fast(BITMAP* bmp, short sx, short sy, short sw, short sh,
      short dx, short dy) {
 
-    char* VGA = (char*)VGA_POS; 
+    char* VGA = target_frame->data; 
     char* data = (char*)bmp->data;
-    short y;
-    short offset = 320*dy + dx;
-    short bmp_off = bmp->w*sy + sx;
+    short y = 0;
+    short offset, bmp_off;
 
-    for(y=0; y < sh; ++ y) {
+    // Clip
+    if(!clip(bmp, &dx, &dy, &sx, &sy, &sw, &sh, 0)) return;
+    offset = target_frame->w*dy + dx;
+    bmp_off = bmp->w*sy + sx;
+
+    for(; y < sh; ++ y) {
 
         memcpy(VGA + offset, data + bmp_off, sw);
-        offset += 320;
+        offset += target_frame->w;
         bmp_off += bmp->w;
     }
 }
@@ -120,4 +211,18 @@ void draw_text(BITMAP* bmp, const char* text,
 
         x += cw;
     }
+}
+
+
+// Draw a filled rectangle
+void fill_rect(short dx, short dy, short dw, short dh) {
+
+    // ...
+}
+
+
+// Set render target
+void set_render_target(BITMAP* bmp) {
+
+    target_frame = bmp != NULL ? bmp : &default_frame;
 }

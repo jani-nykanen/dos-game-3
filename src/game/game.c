@@ -27,7 +27,7 @@ void game_init() {
 void game_run() {
 
     // clear_screen(3);
-    draw_bitmap_fast(bmp_parrot, 32, 32);
+    draw_bitmap_fast(bmp_parrot, -32, 32);
    
-    draw_text(bmp_font, "Hello world!", 2, 2);
+    draw_text(bmp_font, "Hello world!", -2, -2);
 }
