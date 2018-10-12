@@ -13,6 +13,8 @@
 
 #include "palette.c"
 
+// Alpha color (temporarily a constant!)
+static const char ALPHA = 170;
 
 // VGA position
 static const long VGA_POS = 0xA0000000;
@@ -164,6 +166,80 @@ void draw_bitmap_region_fast(BITMAP* bmp, short sx, short sy, short sw, short sh
 }
 
 
+// Draw bitmap
+void draw_bitmap(BITMAP* bmp, short dx, short dy, char flip) {
+
+    draw_bitmap_region(bmp, 0, 0, bmp->w, bmp->h, dx, dy, flip);
+}
+
+
+// Draw a bitmap region
+void draw_bitmap_region(BITMAP* bmp, short sx, short sy, short sw, short sh,
+     short dx, short dy, char flip) {
+
+    char* VGA = target_frame->data; 
+    char* data = (char*)bmp->data;
+    short x, y;
+    short offset, bmp_off;
+    char col;
+
+    bool hflip = (flip & FLIP_H) != 0;
+    bool vflip = (flip & FLIP_V) != 0;
+
+    // Clip
+    if(!clip(bmp, &dx, &dy, &sx, &sy, &sw, &sh, flip)) return;
+    offset = target_frame->w*dy + dx;
+    bmp_off = bmp->w*sy + sx;
+
+    // Flip
+    if(vflip) {
+
+        offset += (sh-1) * target_frame->w;
+    }
+
+    if(hflip) {
+
+        offset += sw -1;
+    }
+
+    // Draw pixels
+    for(y = 0; y < sh; ++ y) {
+
+        for(x = 0; x <  sw; ++ x) {
+
+            col = data[bmp_off ++];
+
+            if(col != ALPHA)
+                VGA[offset] = col;
+
+            if(hflip)
+                -- offset;
+            else
+                ++ offset;
+
+        }
+
+        bmp_off += bmp->w - sw;
+
+        if(hflip) {
+
+            offset += sw * 2;
+        }
+
+        offset -= sw;
+
+        if(vflip) {
+
+            offset -= target_frame->w; 
+        }
+        else {
+
+            offset += target_frame->w; 
+        }
+    }
+}
+
+
 // Draw text 
 void draw_text(BITMAP* bmp, const char* text, 
     short dx, short dy) {
@@ -194,9 +270,32 @@ void draw_text(BITMAP* bmp, const char* text,
 
 
 // Draw a filled rectangle
-void fill_rect(short dx, short dy, short dw, short dh) {
+void fill_rect(short dx, short dy, short dw, short dh, char col) {
 
-    // ...
+    short endx, endy, y;
+    char* VGA = target_frame->data; 
+    short offset;
+
+    // Restrict to the target frame area
+    if(dx < 0) dx = 0;
+    if(dy < 0) dy = 0;
+
+    endx = dx + dw;
+    if(endx > target_frame->w) 
+        endx = target_frame->w;
+    if(endy > target_frame->h) 
+        endy = target_frame->h;
+
+    // If nothing to draw (horizontally), skip
+    if(endx <= dx) return;
+
+    // Draw
+    offset = target_frame->w*dy + dx;
+    for(y = dy; y < endy; ++ y) {
+
+        memset(VGA + offset, col, endx-dx);
+        offset += target_frame->w;
+    }
 }
 
 
