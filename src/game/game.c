@@ -4,6 +4,7 @@
 #include "game.h"
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "../core/graph.h"
 #include "../core/input.h"
@@ -26,13 +27,15 @@ static BITMAP* canvas;
 
 // Frame skip timer
 static char frame_skip_timer = 0;
+// Skip frame
+static bool skip_frame = false;
 
 // TEMP
 static int pos = 96;
 
 
 // Draw canvas
-static void draw_canvas() {
+static void draw_to_canvas() {
 
     // Draw random stuff
     clear_screen(170);
@@ -46,35 +49,8 @@ static void draw_canvas() {
 }
 
 
-// Update game
-static void update_game() {
-
-    // Update temp position
-    pos -= 2;
-    if(pos < -16)
-        pos += 192;
-
-    // Animate goat
-    spr_animate(&spr_goat, 0, 0, 5, 2);
-}
-
-
-// Draw
-static void draw_game() {
-
-    // Draw content to the canvas
-    set_render_target(canvas);
-    draw_canvas();
-
-    // Set target to the screen
-    set_render_target(NULL);
-
-    draw_bitmap_fast(canvas, 20, 20);
-}
-
-
-// Initialize game
-void game_init() {
+// Initialize
+static void game_init() {
 
     // Load bitmaps
     bmp_parrot = load_bitmap("ASSETS/BITMAPS/PARROT.BIN");
@@ -92,18 +68,64 @@ void game_init() {
 }
 
 
-// Change to the game scene
-void game_run() {
+// Update
+static void game_update() {
 
-    // Skip frames
-    if(++ frame_skip_timer == FRAME_SKIP) {
-
+    // Check if frame is to be skipped
+    skip_frame = (++ frame_skip_timer == FRAME_SKIP);
+    // Skip frame if needed
+    if(skip_frame) {
+        
         frame_skip_timer = 0;
         return;
     }
 
-    // Update game
-    update_game();
-    // Draw game
-    draw_game();
+    // Update temp position
+    pos -= 2;
+    if(pos < -16)
+        pos += 192;
+
+    // Animate goat
+    spr_animate(&spr_goat, 0, 0, 5, 2);
+}
+
+
+// Draw
+static void game_draw() {
+
+     // Skip frame if needed
+    if(skip_frame)
+        return;
+
+    // Draw content to the canvas
+    set_render_target(canvas);
+    draw_to_canvas();
+
+    // Set target to the screen
+    set_render_target(NULL);
+
+    draw_bitmap_fast(canvas, 20, 20);
+}
+
+
+// Destroy
+static void game_destroy() {
+
+}
+
+
+// Change to
+static void game_change_to() {
+
+}
+
+
+// Add game scene
+SCENE get_game_scene() {
+
+    const char* NAME = "game";
+
+    // Return the scene
+    return scene_create(game_init, game_update, game_draw,
+        game_destroy, game_change_to, NAME);
 }

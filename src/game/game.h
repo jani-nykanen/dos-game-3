@@ -4,10 +4,9 @@
 #ifndef __GAME__
 #define __GAME__
 
-// Initialize game
-void game_init();
+#include "../core/scene.h"
 
-// Change to the game scene
-void game_run();
+// Add game scene
+SCENE get_game_scene();
 
 #endif // __GAME__

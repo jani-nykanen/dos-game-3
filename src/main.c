@@ -12,9 +12,9 @@ void main() {
     // Initialize system
     sys_init();
 
-    // Initialize scenes
-    game_init();
+    // Add scenes
+    sys_add_scene(get_game_scene(), false, true);
 
     // Start application
-    sys_start_prog(game_run);
+    sys_start_prog();
 }
